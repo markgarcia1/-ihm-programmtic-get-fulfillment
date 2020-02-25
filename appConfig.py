@@ -23,14 +23,15 @@ class AppConfig:
     connectionUrl = '';
     collectionName = ''
     uri = ''
-    environment = "UNIT_TEST"
-    loging_level = "INFO"
+    environment = dev
+    logging_level = "INFO"
 
     def display_config(self) -> str:
         return ' "host" : "{}","database: "{}" ", "collection: "{}" ", "userName" : "{}", "userPassword" : "SHHH" ' \
             .format(self.host, self.dbName, self.collectionName, self.userName)
 
     def buildurl(self) -> str:
+        # example MongoDb connection string.....
         # mongodb://dbadmin:<insertYourPassword>@programmatic-fulfillment.cluster-cgnzhhwlkuak.us-east-1.docdb.amazonaws.com:27017/?replicaSet=rs0&readPreference=secondaryPreferred&retryWrites=false
         if self.mode == self.deploy:
             self.connectionUrl = 'mongodb://' + self.userName + ':' + self.userPassword + '@' + self.host + '/' \
@@ -46,19 +47,30 @@ class AppConfig:
     # get all ENV proerties and set them
     def config(self):
         if self.mode is not self.development:
-            self.host = os.environ['DB_HOST']
-            print(str(self.host))
-            self.dbName = os.environ['DB_NAME']
-            print(str(self.userName))
-            self.userName = os.environ['DB_USERNAME']
-            self.userPassword = os.environ['DB_PASSWORD']
-            self.collectionName = os.environ['DB_COLLECTION_NAME']
-            self.environment = os.environ['APP_ENVIRONMENT']
-            self.loging_level = os.environ['APP_LOG_LEVEL ']
-            # encryptedPass = os.environ['DB_PASSWORD']
-            # cipherTextBlob = b64decode(encryptedPass)
-            # self.userPassword = passwd
-            self.uri = self.buildurl()
+            try:
+                self.host = os.environ['DB_HOST']
+                self.dbName = os.environ['DB_NAME']
+                self.userName = os.environ['DB_USERNAME']
+                # encryptedPass = os.environ['DB_PASSWORD']
+                # cipherTextBlob = b64decode(encryptedPass)
+                # self.userPassword = passwd
+                self.userPassword = os.environ['DB_PASSWORD']
+                self.collectionName = os.environ['DB_COLLECTION_NAME']
+                self.environment = os.environ['APP_ENVIRONMENT']
+                self.logging_level = os.environ['APP_LOG_LEVEL']
+                self.uri = self.buildurl()
+                if self.logging_level == self.debug:
+                    print("AppConfig: ENV HOST = " + str(self.host))
+                    print("AppConfig: ENV DB_NAME = " + str(self.dbName))
+                    print("AppConfig: ENV CollectionName = " + str(self.collectionName))
+                    print("AppConfig: ENV Username = " + str(self.userName))
+                    print("AppConfig: ENV App Log Level = " + str(self.logging_level))
+                    print("AppConfig: ENV App Environment = " + str(self.environment))
+                    print("AppConfig: DB Connection URI: " + self.buildurl())
+
+            except Exception as e:
+               print("App Configuration - Error processing Environment settings... {}".format(e))
+               raise e
         return
 
     # manual configuration capability
