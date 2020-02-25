@@ -4,7 +4,7 @@ import json
 class Response:
 
     def __init__(self, status_code, data, message):
-        self.statusCode = status_code
+        self.status_code = status_code
         self.message = ""
         self.body = data
 

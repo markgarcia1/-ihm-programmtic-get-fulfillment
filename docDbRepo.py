@@ -42,7 +42,7 @@ class DocDbRepo:
             count = -1
             if result is not None:
                 # Do Something here to build message that the Document was deleted
-                print("DocDbRepo: Delete successful for  {}".format(criteria))
+                print("DocDbRepo: Delete successful for {}".format(criteria))
                 count = result.deleted_count
             else:
                 # Do something here to build message that the delete() failed!0
@@ -82,10 +82,10 @@ class DocDbRepo:
             collection = db.get_collection(self.appConfig.collectionName)
             # collection = getattr(db, self.appConfig.collectionName)
             if self.appConfig.logging_level == self.appConfig.debug:
-                print("Inserting multiple Documents: {}".format(str(data)))
+                print("DocDbRepo: Inserting multiple Documents: {}".format(str(data)))
             result = collection.insert_many(data)
             if not result:
-                print("Insert_many() failed!")
+                print("DocDbRepo: Insert_many() failed!")
             self.close(client)
             return len(result.inserted_ids)
         except Exception as ex:
@@ -113,56 +113,7 @@ class DocDbRepo:
             print(ex)
             raise ex
 
-    # search for Documents matching input search criteria
-    # def find(self, criteria):
-    #     try:
-    #         print("DocDbRepo: Searching for Documents matching criteria: {}".format(str(criteria)))
-    #         search_result = None
-    #         client = self.open()
-    #         results = []
-    #         db = client.get_database(self.appConfig.dbName)
-    #         if self.appConfig.logging_level == self.appConfig.debug:
-    #             print("DocDbRepo: DB = {}".format(db))
-    #             print("DocDbRepo: collectionName = {}".format(self.appConfig.collectionName))
-    #
-    #         collection = getattr(db, self.appConfig.collectionName)
-    #
-    #         if self.appConfig.logging_level == self.appConfig.debug:
-    #             print("DocDbRepo: got collection....")
-    #             print("DocDbRepo: Collection = {}".format(collection))
-    #
-    #         query = build_query(criteria)
-    #         print("DocDbRepo: searching for Orders by {}".format(query))
-    #         cursor = collection.find(query)
-    #         if self.appConfig.logging_level == self.appConfig.debug:
-    #             print("Cursor: {}".format(str(cursor)))
-    #
-    #         for doc in cursor:
-    #             print("Doc: {}".format(doc))
-    #             objId = str(doc["_id"])
-    #             print("ObjectID: {}".format(objId))
-    #             doc["_id"] = objId
-    #             print("DocDbRepo: appending document to List...")
-    #             results.append(doc)
-    #
-    #         print("DocDbRepo: results has {} documents".format(len(results)))
-    #         print("DocDbRepo: attempting to close client")
-    #         self.close(client)
-    #
-    #         if self.appConfig.logging_level == self.appConfig.debug:
-    #             if len(results) == 1:
-    #                 print("DocDbRepo: results List has 1 item")
-    #                 print("DocDbRepo: item[0] = {}".format(results[0]))
-    #             else:
-    #                 print("DocDbRepo: results List has multiple items")
-    #                 print("DocDbRepo: item[] = {}".format(results))
-    #         # Return the first Document in the list of we only have a single
-    #         # Document, otherwise return the entire List<Document>
-    #         return results[0] if len(results) == 1 else results
-    #     except Exception as ex:
-    #         errno, strerror = ex.args
-    #         print("Error({0}): {1}".format(errno, strerror))
-    #         raise ex
+    # Search for Documents by input criteria
     def find(self, criteria):
         try:
             print("DocDbRepo: Searching for Documents matching criteria: {}".format(str(criteria)))
@@ -180,12 +131,14 @@ class DocDbRepo:
                 print("DocDbRepo: got collection....")
                 print("DocDbRepo: Collection = {}".format(collection))
 
+            # Build search criteria query string and issue the find() on repo
             query = build_query(criteria)
-            print("DocDbRepo: find() query = {}".format(query))
+            print("DocDbRepo: Issuing find() query got search criteria: {}".format(query))
             cursor = collection.find(query)
             if self.appConfig.logging_level == self.appConfig.debug:
                 print("DocDbRepo: Cursor: {}".format(str(cursor)))
 
+            # MAKE SURE we have data!!
             if cursor.count() != 0:
                 for doc in cursor:
                     # print("Doc: {}".format(doc))
@@ -208,6 +161,7 @@ class DocDbRepo:
                 else:
                     print("DocDbRepo: results List has multiple items")
                     print("DocDbRepo: item[] = {}".format(results))
+
             # Return the first Document in the list of we only have a single
             # Document, otherwise return the entire List<Document>
             return results[0] if len(results) == 1 else results

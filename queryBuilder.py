@@ -1,6 +1,3 @@
-import json
-import datetime
-
 from customExceptions import MissingParameterException, DateFormatException
 from param import Parameter
 from validators import validate_date_format
@@ -16,37 +13,69 @@ validation_error_message = ""
 #       input_parameter_list - list of key value pairs
 #       validate_parameter_option - boolean flag to enable/disable parameter validation
 def build_query(input_parameter_list):
+    print("QueryBuilder: INPUT Parameters: {}".format(input_parameter_list))
     parameters = {}
-    fulfillment_parameters = []
-    paramKeys = [];
-    query = ""
     try:
         for p in input_parameter_list:
-            paramKeys.append(p)
+            p = p.replace('"', '')
+            # print("QueryBuilder: Param = "+ p)
             if p in order_properties:
                 # print("{} is part of Order".format(p))
                 if is_date_param(p) and validate_date_format(input_parameter_list[p]):
                     param = build_date_param(p, input_parameter_list[p])
                     parameters[p] = param[p]
                 else:
-                    # param = create_object(p, input_parameter_list[p])
+
                     parameters[p] = input_parameter_list[p]
             else:
+                # print("QueryBuilder: {} is a fulfillment property.".format(p))
+                # append embedded doc qualifier to parameter key
                 v = 'fulfillmentList.' + p
                 param = create_object(v, input_parameter_list[p])
                 parameters[v] = param[v]
+
+        print("QueryBuilder: query = {}".format(str(parameters)))
     except DateFormatException as dfe:
+        print("QueryBuilder: Exception {}".format(dfe))
+        print(dfe)
         raise dfe
-    except ValueError:
-        pass
-    except Exception as e:
-        raise e
+    except ValueError as ve:
+        print("QueryBuilder: Exception {}".format(ve))
+        print(ve)
+        raise ve
+    except Exception as ex:
+        print("QueryBuilder: Exception {}".format(ex))
+        print(ex)
+        raise ex
     return parameters
 
 
-def validate_parameters(parameters_list):
+# By default, API Gateway or Lambda automatically sorts GET parameters alphabetically.
+# We need to reorder the parameter Map so that 'startDate' comes before 'endDate'.
+def reorder_parameter_start_and_end_dates(parameters_dict):
+    print("QueryBuilder: reordering 'starDate' and 'endDate' parameters.")
+    print("QueryBuiler: original List = {}".format(parameters_dict))
+    new_list = {}
+    end_date = parameters_dict["endDate"]
+    for key in parameters_dict:
+        if key != "endDate":
+            new_list[key] = parameters_dict[key]
+        if key == "startDate":
+            new_list["endDate"] = end_date
+    return new_list
+
+
+# Identify if Input GET Parameters contain both 'startDate' and 'endDate' arguments
+def parameters_contain_start_and_end_dates(parameters_dict):
     result = False
-    if parameters_list.__contains__("PageId") and parameters_list.__contains__("orderId"):
+    if parameters_dict.__contains__("startDate") and parameters_dict.__contains__("endDate"):
+        result = True
+    return result
+
+# Validate input POST parameters to make sure they have 'PageID' and 'orderId' keys.
+def validate_parameters(parameters_dict):
+    result = False
+    if parameters_dict.__contains__("PageId") and parameters_dict.__contains__("orderId"):
         result = True
     return result
 
