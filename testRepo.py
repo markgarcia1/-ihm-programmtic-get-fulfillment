@@ -4,7 +4,7 @@ import warnings
 # from app import create_app
 from appConfig import AppConfig
 from docDbRepo import DocDbRepo
-from querybuilder import build_query
+from queryBuilder import build_query, parameters_contain_start_and_end_dates, reorder_parameter_start_and_end_dates
 
 unittest.TestLoader.sortTestMethodsUsing = None
 
@@ -53,6 +53,7 @@ class TestConfig:
     config.manual_config(test_config['host'], test_config['dbName'], test_config['username'], test_config['password'],
                          test_config['collection'])
     config.environment = config.unit_test
+    config.logging_level = config.debug
 
 
 class RepTest(unittest.TestCase):
@@ -119,16 +120,16 @@ class RepTest(unittest.TestCase):
         appConfig.manual_config(test_config['host'], test_config['dbName'], test_config['username'],
                                 test_config['password'], test_config['collection'])
         repo = DocDbRepo(appConfig)
-        docId = repo.insert_one(appConfig.collectionName, mock_order)
+        docId = repo.insert_one(mock_order)
         print("DocumentId = {}".format(docId))
         self.assertIsNotNone(docId)
         count = repo.get_collection_count(appConfig.collectionName)
         self.assertTrue(count == 5)
-        doc = repo.find(appConfig.collectionName, {"orderId": "8808018297"})
+        doc = repo.find({"orderId": "8808018297"})
         self.assertIsNotNone(doc)
         self.assertTrue(doc["orderId"] == "8808018297")
         self.assertTrue(doc["PageID"] == "2939293999999999")
-        delete_count = repo.delete(appConfig.collectionName, {"PageID": "2939293999999999"})
+        delete_count = repo.delete({"PageID": "2939293999999999"})
         print("Repo.delete() returned : {}".format(delete_count))
         self.assertTrue(delete_count == 1)
         count = repo.get_collection_count(appConfig.collectionName)
@@ -141,16 +142,16 @@ class RepTest(unittest.TestCase):
         appConfig.manual_config(test_config['host'], test_config['dbName'], test_config['username'],
                                 test_config['password'], test_config['collection'])
         repo = DocDbRepo(appConfig)
-        docId = repo.insert_one(appConfig.collectionName, mock_order)
+        docId = repo.insert_one(mock_order)
         print("DocumentId = {}".format(docId))
         self.assertIsNotNone(docId)
         count = repo.get_collection_count(appConfig.collectionName)
         self.assertTrue(count == 5)
-        doc = repo.find(appConfig.collectionName, {"orderId": "8808018297"})
+        doc = repo.find({"orderId": "8808018297"})
         self.assertIsNotNone(doc)
         self.assertTrue(doc["orderId"] == "8808018297")
         self.assertTrue(doc["PageID"] == "2939293999999999")
-        delete_count = repo.delete(appConfig.collectionName, {"PageID": "2939293999999999"})
+        delete_count = repo.delete({"PageID": "2939293999999999"})
         print("Repo.delete() returned : {}".format(delete_count))
         self.assertTrue(delete_count == 1)
         count = repo.get_collection_count(appConfig.collectionName)
@@ -164,7 +165,7 @@ class RepTest(unittest.TestCase):
                                 test_config['password'], test_config['collection'])
         repo = DocDbRepo(appConfig)
         repo.validate_parameters = disable_parameter_validation
-        search_results = repo.find(appConfig.collectionName, {"PageID": "911"})
+        search_results = repo.find({"PageID": "911"})
         print(search_results)
         self.assertIsNotNone(search_results)
 
@@ -177,13 +178,14 @@ class RepTest(unittest.TestCase):
                                 test_config['password'], test_config['collection'])
         repo = DocDbRepo(appConfig)
         repo.validate_parameters = disable_parameter_validation
-        search_results = repo.find(appConfig.collectionName, {"Station ID": "WGIR-FM"})
+        search_results = repo.find({"Station ID": "WGIR-FM"})
         print(search_results)
         self.assertIsNotNone(search_results)
         for doc in search_results:
             fulfillments = doc["fulfillmentList"]
             for f in fulfillments:
-                self.assertTrue(f["Station ID"] == "WGIR-FM")
+                if "Station ID" in f.keys():
+                    self.assertTrue(f["Station ID"] == "WGIR-FM")
 
         return result
 
@@ -194,7 +196,7 @@ class RepTest(unittest.TestCase):
                                 test_config['password'], test_config['collection'])
         repo = DocDbRepo(appConfig)
         repo.validate_parameters = disable_parameter_validation
-        doc = repo.find(appConfig.collectionName, {"orderId": "7800018297"})
+        doc = repo.find({"orderId": "7800018297"})
         print(doc)
         self.assertIsNotNone(doc)
         self.assertTrue(doc["orderId"] == "7800018297")
@@ -207,7 +209,7 @@ class RepTest(unittest.TestCase):
                                 test_config['password'], test_config['collection'])
         repo = DocDbRepo(appConfig)
         repo.validate_parameters = disable_parameter_validation
-        search_results = repo.find(appConfig.collectionName, {"startDate": "10/26/2019"})
+        search_results = repo.find({"startDate": "10/26/2019"})
         print(search_results)
         self.assertIsNotNone(search_results)
         self.assertTrue(len(search_results) > 0)
@@ -222,8 +224,8 @@ class RepTest(unittest.TestCase):
         repo = DocDbRepo(appConfig)
         repo.validate_parameters = disable_parameter_validation
         query = {"endDate": "11/30/2019"}
-        search_results = repo.find(appConfig.collectionName, query)
-        print(search_results)
+        search_results = repo.find(query)
+        print("Results = {}".format(search_results))
         self.assertIsNotNone(search_results)
         return result
 
@@ -232,19 +234,30 @@ class RepTest(unittest.TestCase):
         appConfig = AppConfig(None, development)
         appConfig.manual_config(test_config['host'], test_config['dbName'], test_config['username'],
                                 test_config['password'], test_config['collection'])
+        appConfig.logging_level = appConfig.debug
         repo = DocDbRepo(appConfig)
         repo.validate_parameters = disable_parameter_validation
         criteria = {"startDate": "10/26/2019", "endDate": "11/30/2019"}
-        search_results = repo.find(appConfig.collectionName, criteria)
-        print(search_results)
+        search_results = repo.find(criteria)
+        print("REsults = {}".format(search_results))
         self.assertIsNotNone(len(search_results) > 0)
         return result
+
+    def test_reordering_of_start_and_end_dates(self):
+        criteria = {"endDate": "11/30/2019", "startDate": "10/26/2019"}
+        print("Test Criteria = {}".format(criteria))
+        result = parameters_contain_start_and_end_dates(criteria)
+        print("contains start and end date returned {}".format(result))
+        self.assertTrue(result)
+        newCriteria = reorder_parameter_start_and_end_dates(criteria)
+        print("reordering of criteria = {}".format(newCriteria))
+        self.assertTrue(len(newCriteria.keys()) == 2)
+        start = list(newCriteria.keys())[0]
+        end = list(newCriteria.keys())[1]
+        self.assertTrue(start == "startDate")
+        self.assertTrue(end == "endDate")
+        return
 
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
-
-# def main():
-#     configResult = test_config()
-#     print("Test Config result =" + str(configResult))
-#     return

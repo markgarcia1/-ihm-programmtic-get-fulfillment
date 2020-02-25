@@ -3,7 +3,7 @@ import unittest
 import warnings
 
 from customExceptions import MissingParameterException, DateFormatException
-from querybuilder import build_query
+from queryBuilder import build_query
 
 order_params = {
     "PageId": "123456",
