@@ -46,9 +46,6 @@ def validate_post_data(event):
             else:
                 print("Validators:  POST data is not a dictionary.")
             doc = json.loads(post_data)
-            print("Validators: doc = {}".format(doc))
-            print("Validators: doc.keys() = {}".format(doc.keys()))
-            print("Validators: doc[PageID] = {}".format(doc["PageID"]))
             if "PageID" not in doc.keys() or doc["PageID"] == "":
                 pde = PostDataException()
                 pde.message = "Document PageID is Null or empty."
@@ -58,34 +55,16 @@ def validate_post_data(event):
         print("Validators: Error:  {}".format(e))
         raise e
     return True
-    # try:
-    #     if event is None:
-    #         pde = PostDataException()
-    #         pde.message = "POST requires at least a single document."
-    #         print("Error: {}".format(pde))
-    #         raise
-    #     docs = event
-    #     for doc in docs:
-    #         if doc["PageID"] is None or doc["PageID"] == "":
-    #             pde = PostDataException()
-    #             pde.message = "Document PageID is Null or empty."
-    #             print("Error: {}".format(pde))
-    #             raise
-    #
-    # except Exception as e:
-    #     print("Error:  {}".format(e))
-    #     raise e
-    # return True
 
 
 def validate_date_format(date_parameter):
     try:
-        datetime.datetime.strptime(date_parameter, '%m/%d/%Y')
+        datetime.datetime.strptime(date_parameter, '%Y/%m/%d')
     except ValueError as ve:
         pass
         dfe = DateFormatException(ve)
         dfe.status_code = 401
-        dfe.message = "Invalid date format for {}. Expected format: mm/dd/yyyy"
+        dfe.message = "Invalid date format for {}. Expected format: yyyy/mm/dd"
         dfe.body = dfe.message
         raise dfe
     return True

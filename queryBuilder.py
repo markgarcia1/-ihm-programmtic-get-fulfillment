@@ -2,10 +2,19 @@ from customExceptions import MissingParameterException, DateFormatException
 from param import Parameter
 from validators import validate_date_format
 
-order_properties = ["PageID", "orderId", "startDate", "endDate", "billingCycle"]
-startDate = 2
-endDate = 3
-validation_error_message = ""
+startDate = "startDate"
+endDate = "endDate"
+startDateDoc = "startDateDoc"
+endDateDoc = "endDateDoc"
+startBillingDate = "startBillingDate"
+endBillingDate = "endBillingDate"
+
+order_properties = ["PageID", "orderId", startDate, endDate, startDateDoc, endDateDoc, startBillingDate,
+                    endBillingDate, "billingCycle"]
+
+date_keys = [startDateDoc, endDateDoc, startBillingDate, endBillingDate]
+end_date_keys = [endDate, endDateDoc, endBillingDate]
+start_date_keys = [startDate, startDateDoc, startBillingDate]
 
 
 # builds a query string for DocDbRepository
@@ -18,9 +27,7 @@ def build_query(input_parameter_list):
     try:
         for p in input_parameter_list:
             p = p.replace('"', '')
-            # print("QueryBuilder: Param = "+ p)
             if p in order_properties:
-                # print("{} is part of Order".format(p))
                 if is_date_param(p) and validate_date_format(input_parameter_list[p]):
                     param = build_date_param(p, input_parameter_list[p])
                     parameters[p] = param[p]
@@ -28,7 +35,6 @@ def build_query(input_parameter_list):
 
                     parameters[p] = input_parameter_list[p]
             else:
-                # print("QueryBuilder: {} is a fulfillment property.".format(p))
                 # append embedded doc qualifier to parameter key
                 v = 'fulfillmentList.' + p
                 param = create_object(v, input_parameter_list[p])
@@ -53,24 +59,51 @@ def build_query(input_parameter_list):
 # By default, API Gateway or Lambda automatically sorts GET parameters alphabetically.
 # We need to reorder the parameter Map so that 'startDate' comes before 'endDate'.
 def reorder_parameter_start_and_end_dates(parameters_dict):
-    print("QueryBuilder: reordering 'starDate' and 'endDate' parameters.")
-    print("QueryBuiler: original List = {}".format(parameters_dict))
+    print("QueryBuilder: reordering GET parameters.")
     new_list = {}
-    end_date = parameters_dict["endDate"]
+    end_date_dict = build_end_date_dictionary(parameters_dict)
     for key in parameters_dict:
-        if key != "endDate":
+        if key not in end_date_keys:
             new_list[key] = parameters_dict[key]
-        if key == "startDate":
-            new_list["endDate"] = end_date
+            if key in start_date_keys:
+                new_list = add_start_and_end_dates(new_list, key, end_date_dict)
+
     return new_list
+
+
+# append start and end date key value pairs to the input List
+def add_start_and_end_dates(list, key, end_date_dict):
+    if key == startDate and end_date_dict[endDate] is not None:
+        list[endDate] = end_date_dict[endDate]
+    elif key == startDateDoc and end_date_dict[endDateDoc] is not None:
+        list[endDateDoc] = end_date_dict[endDateDoc]
+    elif key == startBillingDate and end_date_dict[endBillingDate] is not None:
+        list[endBillingDate] = end_date_dict[endBillingDate]
+    return list
+
+
+# creates dictionary of end date key value pairs for
+# sorting GET requests....
+def build_end_date_dictionary(parameters_dict):
+    dict = {}
+    if endDate in parameters_dict.keys():
+        dict[endDate] = parameters_dict[endDate]
+    if endDateDoc in parameters_dict.keys():
+        dict[endDateDoc] = parameters_dict[endDateDoc]
+    if endBillingDate in parameters_dict.keys():
+        dict[endBillingDate] = parameters_dict[endBillingDate]
+    return dict
 
 
 # Identify if Input GET Parameters contain both 'startDate' and 'endDate' arguments
 def parameters_contain_start_and_end_dates(parameters_dict):
     result = False
-    if parameters_dict.__contains__("startDate") and parameters_dict.__contains__("endDate"):
+    if (parameters_dict.__contains__(startDate) and parameters_dict.__contains__(endDate)) \
+            or (parameters_dict.__contains__(startDateDoc) and parameters_dict.__contains__(endDateDoc)) \
+            or (parameters_dict.__contains__(startBillingDate) and parameters_dict.__contains__(endBillingDate)):
         result = True
     return result
+
 
 # Validate input POST parameters to make sure they have 'PageID' and 'orderId' keys.
 def validate_parameters(parameters_dict):
@@ -85,9 +118,9 @@ def build_param(key, value):
 
 
 def build_date_param(key, value):
-    if key == order_properties[startDate]:
+    if key == start_date_keys[0] or key == order_properties[1] or key == order_properties[2]:
         date_value = create_object(key, greater_than_or_equal_to(value))
-    elif key == order_properties[endDate]:
+    elif key == end_date_keys[0] or key == end_date_keys[1] or key == end_date_keys[2]:
         date_value = create_object(key, less_than_or_equal_to(value))
     else:
         date_value = create_object(key, value)
@@ -95,7 +128,7 @@ def build_date_param(key, value):
 
 
 def is_date_param(key):
-    if key == order_properties[startDate] or key == order_properties[endDate]:
+    if (key == startDate) or (key == endDate) or (key == startDateDoc) or (key == endDateDoc) or (key == startBillingDate) or (key == endBillingDate):
         return True
     return False
 

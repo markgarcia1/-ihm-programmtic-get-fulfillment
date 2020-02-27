@@ -120,20 +120,22 @@ class RepTest(unittest.TestCase):
         appConfig.manual_config(test_config['host'], test_config['dbName'], test_config['username'],
                                 test_config['password'], test_config['collection'])
         repo = DocDbRepo(appConfig)
+        repoCount = repo.get_collection_count(appConfig.collectionName)
         docId = repo.insert_one(mock_order)
         print("DocumentId = {}".format(docId))
         self.assertIsNotNone(docId)
         count = repo.get_collection_count(appConfig.collectionName)
-        self.assertTrue(count == 5)
+        self.assertTrue(count == repoCount+1)
         doc = repo.find({"orderId": "8808018297"})
         self.assertIsNotNone(doc)
         self.assertTrue(doc["orderId"] == "8808018297")
+
         self.assertTrue(doc["PageID"] == "2939293999999999")
         delete_count = repo.delete({"PageID": "2939293999999999"})
         print("Repo.delete() returned : {}".format(delete_count))
         self.assertTrue(delete_count == 1)
         count = repo.get_collection_count(appConfig.collectionName)
-        self.assertTrue(count == 4)
+        self.assertTrue(count == repoCount)
         return result
 
     def test_delete(self):
@@ -142,11 +144,13 @@ class RepTest(unittest.TestCase):
         appConfig.manual_config(test_config['host'], test_config['dbName'], test_config['username'],
                                 test_config['password'], test_config['collection'])
         repo = DocDbRepo(appConfig)
+        repoCount = repo.get_collection_count(appConfig.collectionName)
+
         docId = repo.insert_one(mock_order)
         print("DocumentId = {}".format(docId))
         self.assertIsNotNone(docId)
         count = repo.get_collection_count(appConfig.collectionName)
-        self.assertTrue(count == 5)
+        self.assertTrue(count == repoCount+1)
         doc = repo.find({"orderId": "8808018297"})
         self.assertIsNotNone(doc)
         self.assertTrue(doc["orderId"] == "8808018297")
@@ -155,7 +159,7 @@ class RepTest(unittest.TestCase):
         print("Repo.delete() returned : {}".format(delete_count))
         self.assertTrue(delete_count == 1)
         count = repo.get_collection_count(appConfig.collectionName)
-        self.assertTrue(count == 4)
+        self.assertTrue(count == repoCount)
         return result
 
     def test_find_by_pageId(self):
@@ -258,6 +262,19 @@ class RepTest(unittest.TestCase):
         self.assertTrue(end == "endDate")
         return
 
+
+     def test_startBillingDate(self):
+         result = False
+         appConfig = AppConfig(None, development)
+         appConfig.manual_config(test_config['host'], test_config['dbName'], test_config['username'],
+                                 test_config['password'], test_config['collection'])
+         repo = DocDbRepo(appConfig)
+         repo.validate_parameters = disable_parameter_validation
+         search_results = repo.find({"startBillingDate": "2019/12/30"})
+         print(search_results)
+         self.assertIsNotNone(search_results)
+         self.assertTrue(len(search_results) > 0)
+         return
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)
