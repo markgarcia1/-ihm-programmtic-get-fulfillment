@@ -12,7 +12,7 @@ endBillingDate = "endBillingDate"
 order_properties = ["PageID", "orderId", startDate, endDate, startDateDoc, endDateDoc, startBillingDate,
                     endBillingDate, "billingCycle"]
 
-date_keys = [startDateDoc, endDateDoc, startBillingDate, endBillingDate]
+date_keys = [startDate, endDate, startDateDoc, endDateDoc, startBillingDate, endBillingDate]
 end_date_keys = [endDate, endDateDoc, endBillingDate]
 start_date_keys = [startDate, startDateDoc, startBillingDate]
 
@@ -59,7 +59,7 @@ def build_query(input_parameter_list):
 # By default, API Gateway or Lambda automatically sorts GET parameters alphabetically.
 # We need to reorder the parameter Map so that 'startDate' comes before 'endDate'.
 def reorder_parameter_start_and_end_dates(parameters_dict):
-    print("QueryBuilder: reordering GET parameters.")
+    print("QueryBuilder: reordering GET  start and end date parameters.")
     new_list = {}
     end_date_dict = build_end_date_dictionary(parameters_dict)
     for key in parameters_dict:
@@ -118,7 +118,7 @@ def build_param(key, value):
 
 
 def build_date_param(key, value):
-    if key == start_date_keys[0] or key == order_properties[1] or key == order_properties[2]:
+    if key == start_date_keys[0] or key == start_date_keys[1] or key == start_date_keys[2]:
         date_value = create_object(key, greater_than_or_equal_to(value))
     elif key == end_date_keys[0] or key == end_date_keys[1] or key == end_date_keys[2]:
         date_value = create_object(key, less_than_or_equal_to(value))

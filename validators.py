@@ -50,7 +50,8 @@ def validate_post_data(event):
                 pde = PostDataException()
                 pde.message = "Document PageID is Null or empty."
                 print("Validators:  Error: {}".format(pde))
-                raise
+                raise pde
+
     except Exception as e:
         print("Validators: Error:  {}".format(e))
         raise e

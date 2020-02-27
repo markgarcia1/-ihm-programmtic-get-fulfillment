@@ -40,7 +40,7 @@ test_config = {
     'dbName': "test",
     "username": "dbadmin",
     "password": "ocdbadmin",
-    "collection": "testCollection"
+    "collection": "ProgFulfillment"
 
 }
 
@@ -114,53 +114,53 @@ class RepTest(unittest.TestCase):
         self.assertIsNotNone(search_results)
         return result
 
-    def test_insert(self):
-        result = False
-        appConfig = AppConfig(None, development)
-        appConfig.manual_config(test_config['host'], test_config['dbName'], test_config['username'],
-                                test_config['password'], test_config['collection'])
-        repo = DocDbRepo(appConfig)
-        repoCount = repo.get_collection_count(appConfig.collectionName)
-        docId = repo.insert_one(mock_order)
-        print("DocumentId = {}".format(docId))
-        self.assertIsNotNone(docId)
-        count = repo.get_collection_count(appConfig.collectionName)
-        self.assertTrue(count == repoCount+1)
-        doc = repo.find({"orderId": "8808018297"})
-        self.assertIsNotNone(doc)
-        self.assertTrue(doc["orderId"] == "8808018297")
-
-        self.assertTrue(doc["PageID"] == "2939293999999999")
-        delete_count = repo.delete({"PageID": "2939293999999999"})
-        print("Repo.delete() returned : {}".format(delete_count))
-        self.assertTrue(delete_count == 1)
-        count = repo.get_collection_count(appConfig.collectionName)
-        self.assertTrue(count == repoCount)
-        return result
-
-    def test_delete(self):
-        result = False
-        appConfig = AppConfig(None, development)
-        appConfig.manual_config(test_config['host'], test_config['dbName'], test_config['username'],
-                                test_config['password'], test_config['collection'])
-        repo = DocDbRepo(appConfig)
-        repoCount = repo.get_collection_count(appConfig.collectionName)
-
-        docId = repo.insert_one(mock_order)
-        print("DocumentId = {}".format(docId))
-        self.assertIsNotNone(docId)
-        count = repo.get_collection_count(appConfig.collectionName)
-        self.assertTrue(count == repoCount+1)
-        doc = repo.find({"orderId": "8808018297"})
-        self.assertIsNotNone(doc)
-        self.assertTrue(doc["orderId"] == "8808018297")
-        self.assertTrue(doc["PageID"] == "2939293999999999")
-        delete_count = repo.delete({"PageID": "2939293999999999"})
-        print("Repo.delete() returned : {}".format(delete_count))
-        self.assertTrue(delete_count == 1)
-        count = repo.get_collection_count(appConfig.collectionName)
-        self.assertTrue(count == repoCount)
-        return result
+    # def test_insert(self):
+    #     result = False
+    #     appConfig = AppConfig(None, development)
+    #     appConfig.manual_config(test_config['host'], test_config['dbName'], test_config['username'],
+    #                             test_config['password'], test_config['collection'])
+    #     repo = DocDbRepo(appConfig)
+    #     repoCount = repo.get_collection_count(appConfig.collectionName)
+    #     docId = repo.insert_one(mock_order)
+    #     print("DocumentId = {}".format(docId))
+    #     self.assertIsNotNone(docId)
+    #     count = repo.get_collection_count(appConfig.collectionName)
+    #     self.assertTrue(count == repoCount+1)
+    #     doc = repo.find({"orderId": "8808018297"})
+    #     self.assertIsNotNone(doc)
+    #     self.assertTrue(doc["orderId"] == "8808018297")
+    #
+    #     self.assertTrue(doc["PageID"] == "2939293999999999")
+    #     delete_count = repo.delete({"PageID": "2939293999999999"})
+    #     print("Repo.delete() returned : {}".format(delete_count))
+    #     self.assertTrue(delete_count == 1)
+    #     count = repo.get_collection_count(appConfig.collectionName)
+    #     self.assertTrue(count == repoCount)
+    #     return result
+    #
+    # def test_delete(self):
+    #     result = False
+    #     appConfig = AppConfig(None, development)
+    #     appConfig.manual_config(test_config['host'], test_config['dbName'], test_config['username'],
+    #                             test_config['password'], test_config['collection'])
+    #     repo = DocDbRepo(appConfig)
+    #     repoCount = repo.get_collection_count(appConfig.collectionName)
+    #
+    #     docId = repo.insert_one(mock_order)
+    #     print("DocumentId = {}".format(docId))
+    #     self.assertIsNotNone(docId)
+    #     count = repo.get_collection_count(appConfig.collectionName)
+    #     self.assertTrue(count == repoCount+1)
+    #     doc = repo.find({"orderId": "8808018297"})
+    #     self.assertIsNotNone(doc)
+    #     self.assertTrue(doc["orderId"] == "8808018297")
+    #     self.assertTrue(doc["PageID"] == "2939293999999999")
+    #     delete_count = repo.delete({"PageID": "2939293999999999"})
+    #     print("Repo.delete() returned : {}".format(delete_count))
+    #     self.assertTrue(delete_count == 1)
+    #     count = repo.get_collection_count(appConfig.collectionName)
+    #     self.assertTrue(count == repoCount)
+    #     return result
 
     def test_find_by_pageId(self):
         result = False
@@ -217,7 +217,6 @@ class RepTest(unittest.TestCase):
         print(search_results)
         self.assertIsNotNone(search_results)
         self.assertTrue(len(search_results) > 0)
-
         return result
 
     def test_find_by_endDate(self):
@@ -247,30 +246,30 @@ class RepTest(unittest.TestCase):
         self.assertIsNotNone(len(search_results) > 0)
         return result
 
-    def test_reordering_of_start_and_end_dates(self):
-        criteria = {"endDate": "11/30/2019", "startDate": "10/26/2019"}
-        print("Test Criteria = {}".format(criteria))
-        result = parameters_contain_start_and_end_dates(criteria)
-        print("contains start and end date returned {}".format(result))
-        self.assertTrue(result)
-        newCriteria = reorder_parameter_start_and_end_dates(criteria)
-        print("reordering of criteria = {}".format(newCriteria))
-        self.assertTrue(len(newCriteria.keys()) == 2)
-        start = list(newCriteria.keys())[0]
-        end = list(newCriteria.keys())[1]
-        self.assertTrue(start == "startDate")
-        self.assertTrue(end == "endDate")
-        return
+    # def test_reordering_of_start_and_end_dates(self):
+    #     result = False
+    #     criteria = {"endDate": "11/30/2019", "startDate": "10/26/2019"}
+    #     print("Test Criteria = {}".format(criteria))
+    #     result = parameters_contain_start_and_end_dates(criteria)
+    #     print("contains start and end date returned {}".format(result))
+    #     self.assertTrue(result)
+    #     newCriteria = reorder_parameter_start_and_end_dates(criteria)
+    #     print("reordering of criteria = {}".format(newCriteria))
+    #     self.assertTrue(len(newCriteria.keys()) == 2)
+    #     start = list(newCriteria.keys())[0]
+    #     end = list(newCriteria.keys())[1]
+    #     self.assertTrue(start == "startDate")
+    #     self.assertTrue(end == "endDate")
+    #     return result
 
-
-     def test_startBillingDate(self):
+    def test_startBillingDate(self):
          result = False
          appConfig = AppConfig(None, development)
          appConfig.manual_config(test_config['host'], test_config['dbName'], test_config['username'],
                                  test_config['password'], test_config['collection'])
          repo = DocDbRepo(appConfig)
          repo.validate_parameters = disable_parameter_validation
-         search_results = repo.find({"startBillingDate": "2019/12/30"})
+         search_results = repo.find({"startBillingDate": "2019/11/01"})
          print(search_results)
          self.assertIsNotNone(search_results)
          self.assertTrue(len(search_results) > 0)
