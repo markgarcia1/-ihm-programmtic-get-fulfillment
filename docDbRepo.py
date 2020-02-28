@@ -59,10 +59,9 @@ class DocDbRepo:
         try:
             client = self.open()
             db = client.get_database(self.appConfig.dbName)
-            # collection = db.get_collection(self.appConfig.collectionName)
             collection = getattr(db, self.appConfig.collectionName)
             if self.appConfig.logging_level == self.appConfig.debug:
-                print("DocDbRepo: Insert Document: {}".format(str(document)))
+                print("DocDbRepo: Inserting Document: {}".format(str(document)))
             objectId = collection.insert(document)
             if objectId is None:
                 print("DocDbRepo: Insert failed for document:  ".format(document))
@@ -123,44 +122,33 @@ class DocDbRepo:
             db = client.get_database(self.appConfig.dbName)
             if self.appConfig.logging_level == self.appConfig.debug:
                 print("DocDbRepo: DB = {}".format(db))
-                print("DocDbRepo: collectionName = {}".format(self.appConfig.collectionName))
 
             collection = getattr(db, self.appConfig.collectionName)
-
             if self.appConfig.logging_level == self.appConfig.debug:
-                print("DocDbRepo: got collection....")
                 print("DocDbRepo: Collection = {}".format(collection))
 
             # Build search criteria query string and issue the find() on repo
             query = build_query(criteria)
-            print("DocDbRepo: Issuing find() query got search criteria: {}".format(query))
+            print("DocDbRepo: Calling find() for search criteria: {}".format(query))
             cursor = collection.find(query)
             if self.appConfig.logging_level == self.appConfig.debug:
                 print("DocDbRepo: Cursor: {}".format(str(cursor)))
+                print("DocDbRepo: Cursor.count = {}".format(cursor.count()))
 
             # MAKE SURE we have data!!
             if cursor.count() != 0:
                 for doc in cursor:
-                    # print("Doc: {}".format(doc))
                     objId = str(doc["_id"])
-                    # print("ObjectID: {}".format(objId))
                     doc["_id"] = objId
-                    # print("DocDbRepo: appending document to List...")
                     results.append(doc)
             else:
                 print("DocDbRepo: Cursor had 0 elements.")
 
-            print("DocDbRepo: results has {} documents".format(len(results)))
-            print("DocDbRepo: calling Close on DB client")
+            print("DocDbRepo: results = {} ".format(len(results)))
             self.close(client)
 
             if self.appConfig.logging_level == self.appConfig.debug:
-                if len(results) == 1:
-                    print("DocDbRepo: results List has 1 item")
-                    print("DocDbRepo: item[0] = {}".format(results[0]))
-                else:
-                    print("DocDbRepo: results List has multiple items")
-                    print("DocDbRepo: item[] = {}".format(results))
+                print("DocDbRepo: results[] = {}".format(results))
 
             # Return the first Document in the list of we only have a single
             # Document, otherwise return the entire List<Document>
