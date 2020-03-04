@@ -1,4 +1,5 @@
 import os
+import logging
 from base64 import b64decode
 
 
@@ -25,6 +26,9 @@ class AppConfig:
     uri = ''
     environment = dev
     logging_level = "INFO"
+
+    log_format = '%(levelname)s:-%(name)s: %(message)s'
+    logger = None
 
     def display_config(self) -> str:
         return ' "host" : "{}","database: "{}" ", "collection: "{}" ", "userName" : "{}", "userPassword" : "SHHH" ' \
@@ -69,8 +73,8 @@ class AppConfig:
                     print("AppConfig: DB Connection URI: " + self.buildurl())
 
             except Exception as e:
-               print("App Configuration - Error processing Environment settings... {}".format(e))
-               raise e
+                print("App Configuration - Error processing Environment settings... {}".format(e))
+                raise e
         return
 
     # manual configuration capability
@@ -86,6 +90,29 @@ class AppConfig:
         self.collectionName = collection
         self.uri = self.build_test_url()
         return
+
+    def configure_loging(self, level):
+        logging.basicConfig(format=self.log_format, level=self.return_logging_level(level))
+        return
+
+
+    def return_logging_level(self, level):
+        log_level = logging.INFO
+        if level == 'DEBUG' or level == 'Debug':
+            log_level = logging.DEBUG
+        elif level == 'WARNING' or level == 'Warning':
+            log_level = logging.WARNING
+        elif level == 'CRITICAL' or level == 'Critical':
+            log_level = logging.CRITICAL
+        elif level == 'ERROR' or level == 'Error':
+            log_level = logging.ERROR
+        return log_level
+
+    def get_logger(self, name):
+        logger=logging.getLogger(name)
+        logger.setLevel(self.return_logging_level(self.logging_level))
+        return logger;
+
 
     def __init__(self, context, mode):
         if mode is not None:

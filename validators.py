@@ -4,6 +4,26 @@ import json
 from customExceptions import MissingParameterException, DateFormatException, PostDataException
 
 
+def validate_get_request(event):
+    try:
+        validate_get_parameters_not_null(event)
+        validate_get_parameter_contains_orderId(event)
+    except MissingParameterException as mpe:
+        raise mpe
+    return True
+
+
+def validate_get_parameter_contains_orderId(event):
+    query = event["queryStringParameters"]
+    if "orderId" not in query.keys() or query["orderId"] == "":
+        mpe = MissingParameterException()
+        mpe.message = "orderId is NULL or empty."
+        mpe.status_code = 401
+        mpe.body = mpe.message
+        raise mpe
+    return True
+
+
 def validate_get_parameters_not_null(event):
     try:
         test = event["queryStringParameters"]

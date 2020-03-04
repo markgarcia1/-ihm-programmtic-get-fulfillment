@@ -144,11 +144,11 @@ class DocDbRepo:
             else:
                 print("DocDbRepo: Cursor had 0 elements.")
 
-            print("DocDbRepo: results = {} ".format(len(results)))
+            #print("DocDbRepo: results = {} ".format(len(results)))
             self.close(client)
 
             if self.appConfig.logging_level == self.appConfig.debug:
-                print("DocDbRepo: results[] = {}".format(results))
+                print("DocDbRepo: results[] count = {}".format(len(results)))
 
             # Return the first Document in the list of we only have a single
             # Document, otherwise return the entire List<Document>
@@ -187,7 +187,3 @@ class DocDbRepo:
             print("DocDbRepo: Exception: {}".format(ex))
             print(ex)
             raise ex
-    # # enable disable parameter validation
-    # def set_parameter_validation(self, value):
-    #     self.validate_parameters = value
-    #     return self.validate_parameters

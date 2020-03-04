@@ -5,9 +5,12 @@ from customExceptions import MissingParameterException, DateFormatException
 from docDbRepo import DocDbRepo
 from queryBuilder import build_query, parameters_contain_start_and_end_dates, reorder_parameter_start_and_end_dates
 from response import Response
-from validators import validate_get_parameters_not_null
+from validators import validate_get_request
 
 
+#TODO:
+#     1) Implement better loggin solution for more granularity control of log messages
+#     2) Refactor code to support Pagination of search results that exceed 6MB Response data limit for Lambda
 
 def lambda_handler(event, context):
     results = []
@@ -19,7 +22,7 @@ def lambda_handler(event, context):
         print(os.environ)
         print("progGetLambda: event = " + str(event))
 
-        validate_get_parameters_not_null(event)
+        validate_get_request(event)
         config = AppConfig(context, None)
 
         repo = DocDbRepo(config)
@@ -34,14 +37,13 @@ def lambda_handler(event, context):
             print("progGetLambda: input parameters: {}".format(data))
             # submit query
             results = repo.find(data)
-            
+            # build the response
             rsp_data = results[0] if len(results) == 1 else results
             response = Response(200, rsp_data, "Query returned {} document(s).".format(len(results)))
 
             if config.logging_level == config.debug:
-                print("progGetLambda: results List = {}".format(results))
-                print("progGetLambda: response_data = {}".format(data))
-                print("progGetLambda: response = {}".format(str(response)))
+                print("progGetLambda: results count = {}".format(len(results)))
+
         else:
             print("progGetLambda: Error configuring Order Repository!")
             status_code = 500
@@ -65,7 +67,6 @@ def lambda_handler(event, context):
         message = "Unable to complete GET Request"
         response = Response(status_code, message, message)
 
-    print("progGetLambda: Returning response = {}".format(response.toJSON()))
     return {
         "statusCode": response.status_code,
         "body": json.dumps(response.body)

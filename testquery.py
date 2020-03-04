@@ -4,6 +4,7 @@ import warnings
 
 from customExceptions import MissingParameterException, DateFormatException
 from queryBuilder import build_query
+from validators import validate_get_parameter_contains_orderId, validate_get_request
 
 order_params = {
     "PageId": "123456",
@@ -59,7 +60,7 @@ class RepTest(unittest.TestCase):
         return
 
     def test_get_valid_startDate(self):
-        param = {"startDate": "02/18/2020"}
+        param = {"startDate": "2020/02/18"}
         query = build_query(param)
         print("Query = {}".format(query))
         self.assertTrue("$gte" in str(query))
@@ -71,6 +72,31 @@ class RepTest(unittest.TestCase):
         with self.assertRaises(DateFormatException):
             build_query(param)
         return
+
+    def test_get_request_contains_orderId_fail(self):
+        param = {"queryStringParameters": {"startDate": "02-18-2020"}}
+        err = "orderId is NULL or empty."
+        try:
+            validate_get_request(param)
+            return False
+        except MissingParameterException as mpe:
+            self.assertTrue(mpe)
+            self.assertTrue(mpe.status_code == 401)
+            self.assertTrue(mpe.message == err)
+
+        return True
+
+    def test_get_request_contains_orderId(self):
+        param = {"queryStringParameters": {"orderId": "12345", "startDate": "02-18-2020"}}
+        err = "orderId is NULL or empty."
+        try:
+            value = validate_get_request(param)
+            self.assertTrue(value is True)
+        except MissingParameterException as mpe:
+            print("Exception {}".format(mpe.message))
+            raise mpe
+            return False
+        return True
 
 
 if __name__ == '__main__':
